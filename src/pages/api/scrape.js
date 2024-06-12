@@ -1,27 +1,22 @@
 // pages/api/scrape.js
-import axios from 'axios';
-import cheerio from 'cheerio';
+import { scrapeAmazonPage } from '../../lib/scraper';
 
 export default async function handler(req, res) {
-  const { url } = req.query;
+  const { urls } = req.body; // Assuming URLs are sent in the request body as an array
 
-  if (!url) {
-    return res.status(400).json({ error: 'URL is required' });
+  if (!urls || !Array.isArray(urls) || urls.length === 0) {
+    return res.status(400).json({ error: 'Invalid URLs provided' });
   }
 
   try {
-    // Fetch the HTML content of the page
-    const { data } = await axios.get(url);
-
-    // Load the HTML into cheerio
-    const $ = cheerio.load(data);
-
-    // Example: Extract the title of the page
-    const title = $('title').text();
-
-    // Return the extracted data
-    res.status(200).json({ title });
+    const scrapePromises = urls.map(url => scrapeAmazonPage(url));
+    const productsArray = await Promise.all(scrapePromises);
+    
+    // Flatten the products array (if needed)
+    const products = productsArray.flat();
+    
+    res.status(200).json(products);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to scrape the page' });
+    res.status(500).json({ error: error.message });
   }
 }
