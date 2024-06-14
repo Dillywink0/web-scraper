@@ -1,5 +1,6 @@
 // pages/index.js
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function Home() {
   const [urls, setUrls] = useState('');
@@ -54,6 +55,12 @@ export default function Home() {
           {loading ? 'Scraping...' : 'Scrape'}
         </button>
       </form>
+
+      <Link href="/dashboard">
+        <button style={{ padding: '10px 20px', fontSize: '14px', fontFamily: 'Arial, sans-serif', marginBottom: '20px' }}>
+          Go to Dashboard
+        </button>
+      </Link>
 
       {loading && <p style={{ textAlign: 'center' }}>Loading...</p>}
 
