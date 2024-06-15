@@ -1,81 +1,82 @@
 // pages/index.js
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState } from 'react';
+import { useRouter } from 'next/router';
 
 export default function Home() {
-  const [title, setTitle] = useState('');
-  const [url, setUrl] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
-  const [tags, setTags] = useState('');
-  const [savedLinks, setSavedLinks] = useState([]);
+  const [urls, setUrls] = useState('');
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetchSavedLinks();
-  }, []);
-
-  const fetchSavedLinks = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get('/api/getSavedLinks', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSavedLinks(res.data);
-    } catch (err) {
-      console.error('Failed to fetch saved links', err);
-      setError('Failed to fetch saved links');
-    }
-  };
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setProducts([]);
 
     try {
-      const token = localStorage.getItem('token');
-      const res = await axios.post('/api/saveLink', { title, url, description, category, tags: tags.split(',').map(tag => tag.trim()) }, {
-        headers: { Authorization: `Bearer ${token}` },
+      const urlsArray = urls.split('\n').map(url => url.trim()).filter(url => url !== '');
+
+      const res = await fetch(`/api/scrape`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ urls: urlsArray }),
       });
-      console.log(res.data.message);
-      await fetchSavedLinks();
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setProducts(data);
+      } else {
+        setError(data.error || 'Failed to fetch data');
+      }
     } catch (err) {
-      setError('Failed to save link');
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div>
-      <h1>Dashboard</h1>
+  const handleNavigateToProfile = () => {
+    router.push('/profile');
+  };
 
-      <form onSubmit={handleSubmit}>
-        <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        <input type="text" placeholder="URL" value={url} onChange={(e) => setUrl(e.target.value)} required />
-        <textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
-        <input type="text" placeholder="Category" value={category} onChange={(e) => setCategory(e.target.value)} />
-        <input type="text" placeholder="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} />
-        <button type="submit">{loading ? 'Saving...' : 'Save Link'}</button>
+  return (
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+      <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>Amazon Product Scraper</h1>
+      <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
+        <textarea
+          rows={5}
+          value={urls}
+          onChange={(e) => setUrls(e.target.value)}
+          placeholder="Enter Amazon URLs (one per line)"
+          required
+          style={{ padding: '10px', width: '100%', marginBottom: '10px', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}
+        />
+        <button type="submit" style={{ padding: '10px 20px', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>
+          {loading ? 'Scraping...' : 'Scrape'}
+        </button>
       </form>
 
-      <div>
-        <h2>Saved Links</h2>
-        <ul>
-          {savedLinks.map((link, index) => (
-            <li key={index}>
-              <a href={link.url} target="_blank" rel="noopener noreferrer">{link.title}</a>
-              <p>{link.description}</p>
-              <p>Category: {link.category}</p>
-              <p>Tags: {link.tags.join(', ')}</p>
-            </li>
-          ))}
-        </ul>
+      {loading && <p style={{ textAlign: 'center' }}>Loading...</p>}
+
+      {error && <div style={{ color: 'red', textAlign: 'center', marginBottom: '20px' }}>{error}</div>}
+
+      <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+        {products.map((product, index) => (
+          <div key={index} style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', background: '#f9f9f9' }}>
+            <h3 style={{ marginBottom: '10px', fontSize: '16px', fontFamily: 'Arial, sans-serif' }}>{product.name}</h3>
+            <p style={{ marginBottom: '10px', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>{product.price}</p>
+          </div>
+        ))}
       </div>
 
-      {error && <p>{error}</p>}
+      <button onClick={handleNavigateToProfile} style={{ marginTop: '20px', padding: '10px 20px', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>
+        Go to Profile
+      </button>
     </div>
   );
 }
