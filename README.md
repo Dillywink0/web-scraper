@@ -2,6 +2,17 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
+Needed to install these key things 
+
+Next.js: The React framework for your project.
+React: A JavaScript library for building user interfaces.
+Mongoose: An ODM (Object Data Modeling) library for MongoDB and Node.js.
+jsonwebtoken: To handle JWT creation and verification.
+axios: For making HTTP requests from the frontend.
+bcryptjs: For hashing passwords.
+dotenv: For managing environment variables.
+express: A minimal and flexible Node.js web application framework (used internally by Next.js).
+
 First, run the development server:
 
 ```bash
