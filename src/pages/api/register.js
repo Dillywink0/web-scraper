@@ -1,6 +1,7 @@
 // pages/api/register.js
 import dbConnect from '../../lib/dbConnect';
 import User from '../../models/User';
+import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
   const { method, body } = req;
@@ -22,7 +23,10 @@ export default async function handler(req, res) {
         const newUser = new User({ username, email, password });
         await newUser.save();
 
-        res.status(201).json({ message: 'User registered successfully' });
+        // Create JWT token
+        const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.status(201).json({ token });
       } catch (error) {
         res.status(500).json({ error: 'Failed to register user' });
       }

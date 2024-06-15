@@ -1,79 +1,82 @@
-// pages/index.js
-import { useState } from 'react';
-import Link from 'next/link';
+// pages/index.js (frontend example)
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function Home() {
-  const [urls, setUrls] = useState('');
-  const [products, setProducts] = useState([]);
+  const [title, setTitle] = useState('');
+  const [url, setUrl] = useState('');
+  const [description, setDescription] = useState('');
+  const [savedLinks, setSavedLinks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Fetch saved links on component mount
+    fetchSavedLinks();
+  }, []);
+
+  const fetchSavedLinks = async () => {
+    try {
+      const token = localStorage.getItem('token'); // Retrieve JWT token from local storage
+      const res = await axios.get('/api/getSavedLinks', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setSavedLinks(res.data);
+    } catch (err) {
+      console.error('Failed to fetch saved links', err);
+      setError('Failed to fetch saved links');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setProducts([]);
 
     try {
-      const urlsArray = urls.split('\n').map(url => url.trim()).filter(url => url !== '');
-
-      const res = await fetch(`/api/scrape`, {
-        method: 'POST',
+      const token = localStorage.getItem('token'); // Retrieve JWT token from local storage
+      const res = await axios.post('/api/saveLink', { title, url, description }, {
         headers: {
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ urls: urlsArray }),
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setProducts(data);
-      } else {
-        setError(data.error || 'Failed to fetch data');
-      }
+      console.log(res.data.message); // Log success message
+      await fetchSavedLinks(); // Refresh saved links after saving
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError('Failed to save link');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>Amazon Product Scraper</h1>
-      <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
-        <textarea
-          rows={5}
-          value={urls}
-          onChange={(e) => setUrls(e.target.value)}
-          placeholder="Enter Amazon URLs (one per line)"
-          required
-          style={{ padding: '10px', width: '100%', marginBottom: '10px', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}
-        />
-        <button type="submit" style={{ padding: '10px 20px', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>
-          {loading ? 'Scraping...' : 'Scrape'}
-        </button>
+    <div>
+      <h1>Dashboard</h1>
+
+      {/* Form to save links */}
+      <form onSubmit={handleSubmit}>
+        <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <input type="text" placeholder="URL" value={url} onChange={(e) => setUrl(e.target.value)} required />
+        <textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
+        <button type="submit">{loading ? 'Saving...' : 'Save Link'}</button>
       </form>
 
-      <Link href="/dashboard">
-        <button style={{ padding: '10px 20px', fontSize: '14px', fontFamily: 'Arial, sans-serif', marginBottom: '20px' }}>
-          Go to Dashboard
-        </button>
-      </Link>
-
-      {loading && <p style={{ textAlign: 'center' }}>Loading...</p>}
-
-      {error && <div style={{ color: 'red', textAlign: 'center', marginBottom: '20px' }}>{error}</div>}
-
-      <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-        {products.map((product, index) => (
-          <div key={index} style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', background: '#f9f9f9' }}>
-            <h3 style={{ marginBottom: '10px', fontSize: '16px', fontFamily: 'Arial, sans-serif' }}>{product.name}</h3>
-            <p style={{ marginBottom: '10px', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>{product.price}</p>
-          </div>
-        ))}
+      {/* Display saved links */}
+      <div>
+        <h2>Saved Links</h2>
+        <ul>
+          {savedLinks.map((link, index) => (
+            <li key={index}>
+              <a href={link.url} target="_blank" rel="noopener noreferrer">{link.title}</a>
+              <p>{link.description}</p>
+            </li>
+          ))}
+        </ul>
       </div>
+
+      {error && <p>{error}</p>}
     </div>
   );
 }
