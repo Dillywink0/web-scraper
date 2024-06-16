@@ -12,6 +12,8 @@ axios: For making HTTP requests from the frontend.
 bcryptjs: For hashing passwords.
 dotenv: For managing environment variables.
 express: A minimal and flexible Node.js web application framework (used internally by Next.js).
+npm install nodemailer nodemailer-sendgrid-transport
+
 
 First, run the development server:
 
