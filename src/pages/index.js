@@ -1,11 +1,13 @@
 // pages/index.js
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 
 export default function Home() {
   const [urls, setUrls] = useState('');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,6 +40,10 @@ export default function Home() {
     }
   };
 
+  const handleNavigateToProfile = () => {
+    router.push('/profile');
+  };
+
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>Amazon Product Scraper</h1>
@@ -67,6 +73,10 @@ export default function Home() {
           </div>
         ))}
       </div>
+
+      <button onClick={handleNavigateToProfile} style={{ marginTop: '20px', padding: '10px 20px', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>
+        Go to Profile
+      </button>
     </div>
   );
 }
